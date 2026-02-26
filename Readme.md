@@ -58,7 +58,6 @@ Se establecerá un flujo de integración y Entrega Continua para el equipo de TI
 
 ---
 ##  Arquitectura General
-![Diagrama de Arquitectura](img/Proyecto_iac.png)
 
 
 ##  Requerimientos No Funcionales y Tecnologías AWS
@@ -167,3 +166,4 @@ IaC:          Terraform + Checkov
 ```
 
 ---
+
