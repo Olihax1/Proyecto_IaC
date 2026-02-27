@@ -57,9 +57,9 @@ Se aislará la base de datos de los estudiantes y el catálogo en redes privadas
 Se establecerá un flujo de integración y Entrega Continua para el equipo de TI de la UTP. Las actualizaciones o correcciones del sistema, se podrán lanzar de forma automatizada y sin necesidad de "apagar" el sistema o generar ventanas de mantenimiento, cumpliendo con la exigencia de disponibilidad ininterrumpida.
 
 ---
-## Flujo de una Solicitud de Préstamo en SeaBook
+## Flujo de una Solicitud de PEDIR PRESTADO en SeaBook
 
-**Escenario:** La estudiante María (en Piura) quiere reservar el libro "Cien Años de Soledad".
+**Escenario:** La estudiante María (en Piura) quiere pedir prestado el libro "Cien Años de Soledad".
 
 | Paso | Acción del Usuario | ¿Qué pasa por dentro? | Tecnología AWS | Atributo de Calidad |
 | :---: | :--- | :--- | :--- | :--- |
@@ -68,11 +68,11 @@ Se establecerá un flujo de integración y Entrega Continua para el equipo de TI
 | **3** | María inicia sesión con su usuario y contraseña | Cognito autentica a María y le entrega un token JWT (pase digital). | **Amazon Cognito** | Concurrencia (punto 3) |
 | **4** | María busca "Cien Años de Soledad" | El ALB valida el token y enruta la petición al microservicio de búsquedas. | **Application Load Balancer (ALB)** | Seguridad / Enrutamiento |
 | **5** | El microservicio de búsquedas procesa la solicitud | OpenSearch (motor de búsqueda) encuentra el libro rápidamente por palabras clave. | **Amazon OpenSearch** | Rendimiento (punto 2) |
-| **6** | María hace clic en "RESERVAR" | El clic no va directo al servidor, sino que se encola para evitar saturación por los 15,000 usuarios simultáneos. | **Amazon SQS (FIFO)** | Tolerancia a Fallos (punto 12) |
+| **6** | María hace clic en **"PEDIR PRESTADO"** | El clic no va directo al servidor, sino que se encola para evitar saturación por los 15,000 usuarios simultáneos. | **Amazon SQS (FIFO)** | Tolerancia a Fallos (punto 12) |
 | **7** | Un trabajador recoge la solicitud de la cola | Un contenedor en ECS con Fargate toma la solicitud de María cuando es su turno. | **ECS + Fargate** | Escalabilidad (punto 5) |
-| **8** | Se procesa la reserva del libro | DynamoDB ejecuta una transacción ACID: verifica disponibilidad y descuenta el inventario en una sola operación atómica. | **DynamoDB** | Concurrencia / Integridad (puntos 14 y 29) |
+| **8** | Se procesa el préstamo del libro | DynamoDB ejecuta una transacción ACID: verifica disponibilidad y descuenta el inventario en una sola operación atómica. | **DynamoDB** | Concurrencia / Integridad (puntos 14 y 29) |
 | **9** | Se registra el préstamo en el historial | Se crea el registro del préstamo en la tabla de DynamoDB. Si algo falla, el sistema ejecuta una acción compensatoria (devuelve el libro al inventario). | **Step Functions (Patrón Saga)** | Integridad (punto 29) |
-| **10** | María recibe la confirmación | Se envía una notificación por correo o en pantalla confirmando la reserva exitosa. | **Amazon SNS** | Comunicación Asíncrona |
+| **10** | María recibe la confirmación | Se envía una notificación por correo o en pantalla confirmando que tiene el libro prestado. | **Amazon SNS** | Comunicación Asíncrona |
 
 | Tecnología | Función Principal |
 | :--- | :--- |
@@ -93,4 +93,5 @@ Se establecerá un flujo de integración y Entrega Continua para el equipo de TI
 - **Tolerancia a Fallos:** App Mesh aísla errores y SQS amortigua picos.
 - **Integridad:** Transacciones ACID y patrón Saga evitan datos inconsistentes.
 - **Seguridad:** Cognito, WAF, VPC y KMS protegen todo el proceso.
+
 
