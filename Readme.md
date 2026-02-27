@@ -58,7 +58,8 @@ Se establecerá un flujo de integración y Entrega Continua para el equipo de TI
 
 ---
 ##  Arquitectura General
-![Diagrama de Arquitectura](img/Proyecto_iac.png)
+
+<img width="3684" height="1717" alt="diagram-export-2-26-2026-4_00_34-PM" src="https://github.com/user-attachments/assets/156e0e0a-c8e2-408e-b862-3e8ba20c87d8" />
 
 
 ##  Requerimientos No Funcionales y Tecnologías AWS
@@ -365,3 +366,5 @@ terraform destroy
 - serverapps/docker-compose.*.yml: SonarQube, Grafana, Jenkins, Checkov
 - iac/terraform/: IaC completa
 - src/: microservicios, lambda y frontend estático
+
+
