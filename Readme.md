@@ -167,3 +167,201 @@ IaC:          Terraform + Checkov
 ```
 
 ---
+# SeaBook (AWS + IaC)
+
+
+
+## 0) Flujo Git
+
+Ramas:
+- main: solo releases (tags, por ejemplo v1.0.0)
+- develop: integración
+- feature/*: trabajo diario
+
+Comandos sugeridos:
+bash
+```
+git checkout -b feature/infra-inicial
+git push -u origin feature/infra-inicial
+git tag v1.0.0
+git push --tags
+```
+
+---
+
+## 1) Requisitos en tu PC
+
+### 1.1 Software
+Instalar:
+- *Git*
+- *Docker Desktop*
+- *Python 3.11+*
+- *Terraform 1.6+*
+- *AWS CLI v2*
+
+Verificación:
+bash
+```
+git --version
+docker --version
+python --version
+terraform -version
+aws --version
+```
+
+### 1.2 Acceso AWS
+Configurar credenciales "perfil":
+bash
+```
+aws configure --profile seabook
+aws sts get-caller-identity --profile seabook
+```
+
+---
+
+## 2) Estructura de carpetas
+
+- iac/: Infraestructura como Código (Terraform)
+- src/: Microservicios, lambdas, frontend
+- config/: scripts / ansible (.sh)
+- serverapps/: SonarQube, Checkov, Jenkins, Grafana (local)
+
+---
+
+## 3) Desarrollo local para probar endpoints)
+
+### 3.1 Microservicio Catálogo
+bash
+```
+cd src/microservicios/catalogo
+python -m venv .venv
+# .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app:api --host 0.0.0.0 --port 8001
+```
+
+Prueba:
+bash
+```
+curl http://localhost:8001/salud
+curl "http://localhost:8001/catalogo/buscar?q=aws"
+```
+
+### 3.2 Microservicio Reservas
+bash
+```
+cd src/microservicios/reservas
+python -m venv .venv
+pip install -r requirements.txt
+uvicorn app:api --host 0.0.0.0 --port 8002
+```
+
+Prueba:
+bash
+```
+curl http://localhost:8002/salud
+curl -X POST http://localhost:8002/reservas   -H "Content-Type: application/json"   -d '{"id_libro":"LIB-001","id_usuario":"USR-999"}'
+```
+
+> Advertencia : para publicar a "SNS" se requiere "SNS_TEMA_ARN" y credenciales AWS/IAM. Si no existe, la API devuelve error controlado.
+
+---
+
+## 4) Calidad de aplicación (SonarQube local)
+
+En otra terminal:
+bash
+```
+cd serverapps
+docker compose -f docker-compose.sonarqube.yml up -d
+```
+
+Abrir:
+- SonarQube: http://localhost:9000
+
+Luego (ejemplo con Catálogo):
+bash
+```
+cd src/microservicios/catalogo
+pip install -r requirements-dev.txt
+pytest -q --junitxml=reportes/junit.xml
+sonar-scanner # Sonar scanner requiere token
+```
+
+---
+
+## 5) Test de vulnerabilidades (Checkov con Docker Compose)
+
+bash
+```
+cd serverapps
+docker compose -f docker-compose.checkov.yml run --rm checkov
+```
+
+---
+
+## 6) Infraestructura (Terraform) en AWS
+
+### 6.1 Variables
+# Dominio si se usa ACM/CloudFront con TLS
+Copia:
+bash
+```
+cd iac/terraform
+cp terraform.tfvars.example terraform.tfvars
+```
+
+Edita terraform.tfvars
+- region
+- prefijo
+- dominio 
+- certificado_acm_arn
+
+
+### 6.2 Deploy
+bash
+```
+cd iac/terraform
+terraform init
+terraform fmt -recursive
+terraform validate
+terraform plan -out plan.tfplan
+terraform apply plan.tfplan
+```
+
+### 6.3 Destroy
+bash
+```
+terraform destroy
+```
+
+---
+
+## 7) Observabilidad
+
+### 7.1 Qué se demuestra
+- Métricas: ECS (CPU/Memoria) + SQS (mensajes) + Aurora
+- Logs: CloudWatch Logs + Logs Insights
+- Trazas: X-Ray (microservicios y Lambda)
+- Alertas: CloudWatch Alarms -> SNS (notificación)
+
+### 7.2 Demostración final
+1. Abrir Frontend CloudFront/S3 y ejecuta una búsqueda.
+2. Crea una reserva ALB -> microservicio Reservas.
+3. Verifica en CloudWatch:
+   - Logs del servicio
+   - Métrica de ECS - CPU/Memoria
+4. Verificar en X-Ray:
+   - Trace con correlation_id propagado
+5. Generar una carga, varias reservas y mostrar:
+   - Aumento de mensajes en SQS FIFO
+   - Alarmas si supera umbral configurado
+
+---
+
+## 8) Archivos clave
+
+- docs/PREVIEW_DESARROLLO.md: guía ordenada
+- serverapps/docker-compose.*.yml: SonarQube, Grafana, Jenkins, Checkov
+- iac/terraform/: IaC completa
+- src/: microservicios, lambda y frontend estático
