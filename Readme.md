@@ -57,3 +57,40 @@ Se aislará la base de datos de los estudiantes y el catálogo en redes privadas
 Se establecerá un flujo de integración y Entrega Continua para el equipo de TI de la UTP. Las actualizaciones o correcciones del sistema, se podrán lanzar de forma automatizada y sin necesidad de "apagar" el sistema o generar ventanas de mantenimiento, cumpliendo con la exigencia de disponibilidad ininterrumpida.
 
 ---
+## Flujo de una Solicitud de Préstamo en SeaBook
+
+**Escenario:** La estudiante María (en Piura) quiere reservar el libro "Cien Años de Soledad".
+
+| Paso | Acción del Usuario | ¿Qué pasa por dentro? | Tecnología AWS | Atributo de Calidad |
+| :---: | :--- | :--- | :--- | :--- |
+| **1** | María escribe `biblioteca.utp.edu.pe` | El DNS resuelve la dirección y la dirige al servidor más cercano o saludable. | **Amazon Route 53** | Alta Disponibilidad (punto 10) |
+| **2** | El navegador solicita la página web | La CDN sirve los archivos estáticos (imágenes, CSS, HTML) desde el servidor perimetral más cercano (Lima). | **Amazon CloudFront** | Rendimiento (punto 4) |
+| **3** | María inicia sesión con su usuario y contraseña | Cognito autentica a María y le entrega un token JWT (pase digital). | **Amazon Cognito** | Concurrencia (punto 3) |
+| **4** | María busca "Cien Años de Soledad" | El ALB valida el token y enruta la petición al microservicio de búsquedas. | **Application Load Balancer (ALB)** | Seguridad / Enrutamiento |
+| **5** | El microservicio de búsquedas procesa la solicitud | OpenSearch (motor de búsqueda) encuentra el libro rápidamente por palabras clave. | **Amazon OpenSearch** | Rendimiento (punto 2) |
+| **6** | María hace clic en "RESERVAR" | El clic no va directo al servidor, sino que se encola para evitar saturación por los 15,000 usuarios simultáneos. | **Amazon SQS (FIFO)** | Tolerancia a Fallos (punto 12) |
+| **7** | Un trabajador recoge la solicitud de la cola | Un contenedor en ECS con Fargate toma la solicitud de María cuando es su turno. | **ECS + Fargate** | Escalabilidad (punto 5) |
+| **8** | Se procesa la reserva del libro | DynamoDB ejecuta una transacción ACID: verifica disponibilidad y descuenta el inventario en una sola operación atómica. | **DynamoDB** | Concurrencia / Integridad (puntos 14 y 29) |
+| **9** | Se registra el préstamo en el historial | Se crea el registro del préstamo en la tabla de DynamoDB. Si algo falla, el sistema ejecuta una acción compensatoria (devuelve el libro al inventario). | **Step Functions (Patrón Saga)** | Integridad (punto 29) |
+| **10** | María recibe la confirmación | Se envía una notificación por correo o en pantalla confirmando la reserva exitosa. | **Amazon SNS** | Comunicación Asíncrona |
+
+| Tecnología | Función Principal |
+| :--- | :--- |
+| **Route 53** | Direccionamiento DNS y failover entre zonas |
+| **CloudFront** | CDN para acelerar la carga de contenido estático |
+| **Cognito** | Autenticación y manejo de sesiones de usuarios |
+| **ALB** | Balanceador de carga y enrutamiento a microservicios |
+| **OpenSearch** | Motor de búsqueda avanzada para el catálogo |
+| **SQS** | Cola de mensajes para amortiguar picos de tráfico |
+| **ECS + Fargate** | Cómputo serverless para ejecutar los microservicios |
+| **DynamoDB** | Base de datos NoSQL principal (inventario, préstamos, usuarios) |
+| **Step Functions** | Orquestación de procesos para garantizar integridad (patrón Saga) |
+| **SNS** | Notificaciones asíncronas (correos, alertas) |
+
+- **Rendimiento:** Búsquedas en < 300 ms y préstamos en < 2 segundos.
+- **Concurrencia:** Soporta 15,000 usuarios simultáneos gracias a SQS y Auto Scaling.
+- **Disponibilidad:** Multi-AZ y Route 53 garantizan 99.99% uptime.
+- **Tolerancia a Fallos:** App Mesh aísla errores y SQS amortigua picos.
+- **Integridad:** Transacciones ACID y patrón Saga evitan datos inconsistentes.
+- **Seguridad:** Cognito, WAF, VPC y KMS protegen todo el proceso.
+
