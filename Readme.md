@@ -94,4 +94,57 @@ Se establecerá un flujo de integración y Entrega Continua para el equipo de TI
 - **Integridad:** Transacciones ACID y patrón Saga evitan datos inconsistentes.
 - **Seguridad:** Cognito, WAF, VPC y KMS protegen todo el proceso.
 
+## Comandos Esenciales de Git
 
+```bash
+# 1. Clonar el repositorio (descargar por primera vez)
+git clone https://github.com/Olihax1/Proyecto_IaC.git
+
+# 2. Ver qué archivos cambiaron
+git status
+
+# 3. Agregar archivos al commit
+git add .                       # Agrega todos los archivos
+git add nombre-del-archivo      # Agrega un archivo específico
+
+# 4. Guardar los cambios con un mensaje
+git commit -m "mensaje descriptivo de lo que hiciste"
+
+# 5. Subir los cambios a GitHub
+git push origin main
+
+# 6. Bajar los cambios más recientes (por si alguien más subió algo)
+git pull origin main
+
+# 7. Ver el historial de commits
+git log --oneline
+
+# 8. Crear una rama nueva (para trabajar sin afectar main)
+git checkout -b nombre-de-la-rama
+
+# 9. Cambiar de rama
+git checkout nombre-de-la-rama
+
+# 10. Unir una rama a main (estando en main)
+git merge nombre-de-la-rama
+
+## Comandos Esenciales de Terraform
+
+```bash
+# 1. Prepara todo (solo una vez)
+terraform init
+
+# 2. Ordena el código (que se vea bonito)
+terraform fmt -recursive
+
+# 3. Revisa que no hay errores
+terraform validate
+
+# 4. Mira lo que vas a crear (sin hacerlo aún)
+terraform plan
+
+# 5. ¡A crear la biblioteca!
+terraform apply
+
+# 6. Al final, cierra todo (para no pagar)
+terraform destroy
