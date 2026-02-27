@@ -1,0 +1,8 @@
+services:
+  checkov:
+    image: bridgecrew/checkov:latest
+    working_dir: /repo
+    volumes:
+      - ../:/repo
+    command: >
+      -d /repo/iac/terraform

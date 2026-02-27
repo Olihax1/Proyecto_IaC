@@ -1,0 +1,16 @@
+pipeline {
+  agent any
+  stages {
+    stage('Tests') {
+      steps {
+        sh 'cd src/microservicios/catalogo && pip install -r requirements.txt -r requirements-dev.txt && pytest -q --junitxml=reportes/junit.xml'
+        sh 'cd src/microservicios/reservas && pip install -r requirements.txt -r requirements-dev.txt && pytest -q --junitxml=reportes/junit.xml'
+      }
+    }
+    stage('Checkov') {
+      steps {
+        sh 'cd serverapps && docker compose -f docker-compose.checkov.yaml run --rm checkov'
+      }
+    }
+  }
+}

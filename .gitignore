@@ -1,0 +1,12 @@
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/reportes/
+iac/terraform/.terraform/
+iac/terraform/*.tfstate*
+iac/terraform/plan.tfplan
+serverapps/**/data/
+iac/terraform/*.tfvars
+iac/terraform/*.tfvars.json
+**/*-taskdef*.json

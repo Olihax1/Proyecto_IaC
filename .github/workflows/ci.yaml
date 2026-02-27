@@ -1,0 +1,31 @@
+name: ci
+on:
+  pull_request:
+    branches: [develop, main]
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Tests catálogo
+        run: |
+          cd src/microservicios/catalogo
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+          pytest -q --junitxml=reportes/junit.xml
+      - name: Tests reservas
+        run: |
+          cd src/microservicios/reservas
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+          pytest -q --junitxml=reportes/junit.xml
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkov
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/repo bridgecrew/checkov:latest -d /repo/iac/terraform
